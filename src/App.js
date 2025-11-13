@@ -106,12 +106,59 @@ const App = () => {
     }
   };
 
-  // Option A – Export inside app with back button
-  const exportToPDF = (content, filename) => {
-    setExportContent(content);
-    setExportFilename(filename);
-    setCurrentScreen('export-view');
+ // Option B: keep print dialog but auto-close the window so you’re not stuck on iPhone/PWA
+const exportToPDF = (content, filename) => {
+  // Build the printable HTML
+  const element = document.createElement('div');
+  element.style.padding = '40px';
+  element.style.fontFamily = 'Arial, sans-serif';
+  element.innerHTML = content;
+
+  // Open a print window
+  const printWindow = window.open('', '', 'width=800,height=600');
+
+  // If the popup was blocked or couldn't open, just bail gracefully
+  if (!printWindow) {
+    alert('Popup blocked. Please allow popups for this site to export.');
+    return;
+  }
+
+  // Write document
+  printWindow.document.write('<html><head><title>' + filename + '</title>');
+  printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin:20px 0;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#2563EB;color:white;} h1{color:#2563EB;} .logo{font-size:24px;font-weight:bold;margin-bottom:20px;}</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write(element.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+
+  // iOS/Safari quirks: ensure focus, then print
+  const safePrint = () => {
+    try {
+      printWindow.focus();
+      printWindow.print();
+    } catch (_) {
+      // If print throws, still attempt to close later
+    }
   };
+
+  // Close the window right after printing finishes (supported browsers)
+  printWindow.onafterprint = () => {
+    try { printWindow.close(); } catch (_) {}
+    // Optional: return user to the dashboard
+    setCurrentScreen('dashboard');
+  };
+
+  // Fallback: auto-close after a short delay in case onafterprint doesn't fire (iOS PWA)
+  setTimeout(() => {
+    try { printWindow.close(); } catch (_) {}
+    // Optional: ensure we're back in-app
+    setCurrentScreen('dashboard');
+  }, 1500);
+
+  // Trigger print
+  safePrint();
+};
+
 
   // Reports
   const generateLedgerReport = () => {
