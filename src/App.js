@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, AlertTriangle, CheckCircle, Users, FileText, Download, Eye, Play, Upload, X } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, CheckCircle, Users, FileText, Download, Eye, Play, Upload } from 'lucide-react';
 
 const AuditProPrototype = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
@@ -7,9 +7,47 @@ const AuditProPrototype = () => {
   const [showTamperDemo, setShowTamperDemo] = useState(false);
   const [aiVerificationRun, setAiVerificationRun] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [parsedData, setParsedData] = useState({});
   const [aiResults, setAiResults] = useState(null);
+  const [loginError, setLoginError] = useState('');
+  const [userCode, setUserCode] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Login credentials for each role
+  const loginCredentials = {
+    auditor: {
+      userCode: 'auditor@auditpro.com',
+      password: 'Audit2025!',
+      name: 'Sarah Johnson, CPA'
+    },
+    director: {
+      userCode: 'director@acme.com',
+      password: 'Director2025!',
+      name: 'Michael Chen, CFO'
+    },
+    shareholder: {
+      userCode: 'shareholder@investment.com',
+      password: 'Share2025!',
+      name: 'Emily Rodriguez'
+    },
+    regulator: {
+      userCode: 'regulator@frc.gov',
+      password: 'Regulate2025!',
+      name: 'David Okonkwo'
+    }
+  };
+
+  // Handle login
+  const handleLogin = () => {
+    const credentials = loginCredentials[currentRole];
+    
+    if (userCode === credentials.userCode && password === credentials.password) {
+      setLoginError('');
+      setCurrentScreen('dashboard');
+    } else {
+      setLoginError('Invalid credentials. Please check your user code and password.');
+    }
+  };
 
   // Mock data
   const mockAudit = {
@@ -213,11 +251,25 @@ const AuditProPrototype = () => {
             <h1 className="text-2xl font-bold text-gray-800">AuditPro</h1>
           </div>
           
+          <div className="mb-4">
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
+              {currentRole} Login
+            </span>
+          </div>
+          
           <h2 className="text-xl font-semibold mb-6">Sign in</h2>
+          
+          {loginError && (
+            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+              {loginError}
+            </div>
+          )}
           
           <input
             type="text"
             placeholder="User Code"
+            value={userCode}
+            onChange={(e) => setUserCode(e.target.value)}
             className="w-full border border-gray-300 rounded-lg p-3 mb-4"
           />
           
@@ -225,15 +277,29 @@ const AuditProPrototype = () => {
             <input
               type="password"
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleLogin();
+                }
+              }}
               className="w-full border border-gray-300 rounded-lg p-3 pr-16"
             />
-            <button className="absolute right-3 top-3 text-blue-600 font-medium">show</button>
           </div>
           
-          <a href="#" className="text-blue-600 text-sm mb-6 block">Forgot password?</a>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              alert('Please contact your administrator to reset your password.');
+            }}
+            className="text-blue-600 text-sm mb-6 block hover:underline"
+          >
+            Forgot password?
+          </button>
           
           <button
-            onClick={() => setCurrentScreen('dashboard')}
+            onClick={handleLogin}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full font-medium mb-4 transition"
           >
             Sign in
@@ -246,7 +312,12 @@ const AuditProPrototype = () => {
           </button>
           
           <button
-            onClick={() => setCurrentScreen('welcome')}
+            onClick={() => {
+              setCurrentScreen('welcome');
+              setUserCode('');
+              setPassword('');
+              setLoginError('');
+            }}
             className="w-full mt-4 text-gray-600 hover:text-gray-800"
           >
             ← Back to Role Selection
