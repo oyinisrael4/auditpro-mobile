@@ -56,6 +56,10 @@ const App = () => {
     [audits, selectedAuditId]
   );
 
+  // Option A – Export preview state
+  const [exportContent, setExportContent] = useState('');
+  const [exportFilename, setExportFilename] = useState('');
+
   // Role credentials
   const loginCredentials = {
     auditor: {
@@ -102,21 +106,11 @@ const App = () => {
     }
   };
 
-  // PDF Export
+  // Option A – Export inside app with back button
   const exportToPDF = (content, filename) => {
-    const element = document.createElement('div');
-    element.style.padding = '40px';
-    element.style.fontFamily = 'Arial, sans-serif';
-    element.innerHTML = content;
-
-    const printWindow = window.open('', '', 'width=800,height=600');
-    printWindow.document.write('<html><head><title>' + filename + '</title>');
-    printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin:20px 0;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#2563EB;color:white;} h1{color:#2563EB;} .logo{font-size:24px;font-weight:bold;margin-bottom:20px;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(element.innerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    setExportContent(content);
+    setExportFilename(filename);
+    setCurrentScreen('export-view');
   };
 
   // Reports
@@ -994,18 +988,6 @@ const App = () => {
           <div className="bg-white rounded-lg shadow-md p-6 mb-4">
             <h3 className="font-bold mb-4">Upload CSV files</h3>
 
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-4">
-              <h4 className="font-semibold mb-2">Supported file types:</h4>
-              <ul className="text-sm space-y-1 mb-4">
-                <li>• Sales transactions CSV</li>
-                <li>• Expense records CSV</li>
-                <li>• Inventory data CSV</li>
-              </ul>
-              <p className="text-xs text-gray-600">
-                CSV files should have headers in the first row. Files will be parsed and verified automatically.
-              </p>
-            </div>
-
             <div className={`border-2 border-dashed ${loadingUpload ? 'border-blue-400' : 'border-gray-300'} rounded-lg p-8 text-center mb-4 hover:border-blue-600 transition`}>
               <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
               <p className="text-gray-600 mb-4">{loadingUpload ? 'Parsing file...' : 'Click to browse and upload CSV files'}</p>
@@ -1122,26 +1104,26 @@ const App = () => {
                   <div className="border rounded-lg p-4">
                     <h4 className="text-sm font-semibold mb-2 text-gray-600">Auditor summary</h4>
                     {selectedAudit?.aiResults?.auditorSummary.totalSales > 0 && (
-                      <p className="text-xs mb-1">Sales: ${selectedAudit.aiResults.auditorSummary.totalSales.toLocaleString()}</p>
+                      <p className="text-xs mb-1">Sales: {selectedAudit.aiResults.auditorSummary.totalSales.toLocaleString()}</p>
                     )}
                     {selectedAudit?.aiResults?.auditorSummary.totalExpenses > 0 && (
-                      <p className="text-xs mb-1">Expenses: ${selectedAudit.aiResults.auditorSummary.totalExpenses.toLocaleString()}</p>
+                      <p className="text-xs mb-1">Expenses: {selectedAudit.aiResults.auditorSummary.totalExpenses.toLocaleString()}</p>
                     )}
                     {selectedAudit?.aiResults?.auditorSummary.totalInventory > 0 && (
-                      <p className="text-xs">Inventory: ${selectedAudit.aiResults.auditorSummary.totalInventory.toLocaleString()}</p>
+                      <p className="text-xs">Inventory: {selectedAudit.aiResults.auditorSummary.totalInventory.toLocaleString()}</p>
                     )}
                   </div>
 
                   <div className="border border-green-500 rounded-lg p-4 bg-green-50">
                     <h4 className="text-sm font-semibold mb-2 text-gray-600">AI summary</h4>
                     {selectedAudit?.aiResults?.aiSummary.totalSales > 0 && (
-                      <p className="text-xs mb-1">Sales: ${selectedAudit.aiResults.aiSummary.totalSales.toLocaleString()}</p>
+                      <p className="text-xs mb-1">Sales: {selectedAudit.aiResults.aiSummary.totalSales.toLocaleString()}</p>
                     )}
                     {selectedAudit?.aiResults?.aiSummary.totalExpenses > 0 && (
-                      <p className="text-xs mb-1">Expenses: ${selectedAudit.aiResults.aiSummary.totalExpenses.toLocaleString()}</p>
+                      <p className="text-xs mb-1">Expenses: {selectedAudit.aiResults.aiSummary.totalExpenses.toLocaleString()}</p>
                     )}
                     {selectedAudit?.aiResults?.aiSummary.totalInventory > 0 && (
-                      <p className="text-xs">Inventory: ${selectedAudit.aiResults.aiSummary.totalInventory.toLocaleString()}</p>
+                      <p className="text-xs">Inventory: {selectedAudit.aiResults.aiSummary.totalInventory.toLocaleString()}</p>
                     )}
                     <p className="text-xs mt-2 font-semibold text-green-700">
                       Confidence: {selectedAudit?.aiResults?.aiSummary.confidence}
@@ -1164,8 +1146,8 @@ const App = () => {
                               {m.severity === 'amber' ? 'Review' : 'Critical'}
                             </span>
                           </div>
-                          <p className="text-xs mt-1">Auditor: ${m.auditor} | AI: ${m.ai}</p>
-                          <p className="text-xs text-red-600 font-semibold">Delta: ${m.delta}</p>
+                          <p className="text-xs mt-1">Auditor: {m.auditor} | AI: {m.ai}</p>
+                          <p className="text-xs text-red-600 font-semibold">Delta: {m.delta}</p>
                         </div>
                       ))}
                     </div>
@@ -1561,6 +1543,23 @@ const App = () => {
             </button>
           </div>
         </div>
+      </div>
+    ),
+
+    // Option A – export preview screen (new)
+    'export-view': (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <h2 className="text-xl font-bold mb-4">Export Preview: {exportFilename}</h2>
+        <div
+          className="bg-white rounded-lg shadow-md p-4 overflow-auto"
+          dangerouslySetInnerHTML={{ __html: exportContent }}
+        />
+        <button
+          onClick={() => setCurrentScreen('dashboard')}
+          className="mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          ← Back to Dashboard
+        </button>
       </div>
     )
   };
