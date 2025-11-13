@@ -211,21 +211,6 @@ const AuditProPrototype = () => {
     exportToPDF(reportHTML, `Audit_Report_${selectedAudit.id}.pdf`);
   };
 
-  // Mock data
-  const mockAudit = {
-    id: "AUD-2025-001",
-    company: "Acme Manufacturing Ltd",
-    status: "In Progress",
-    startDate: "2025-01-15",
-    auditor: "Sarah Johnson, CPA"
-  };
-
-  const mockLedgerEntries = [
-    { id: "0x7a8f", timestamp: "2025-01-15 09:23:41", hash: "a3f89d2c1e4b5a...", author: "Auditor", type: "Transaction Entry", status: "Immutable" },
-    { id: "0x7a90", timestamp: "2025-01-15 11:47:12", hash: "b2e47c8d9a1f3e...", author: "Auditor", type: "Raw Data Upload", status: "Immutable" },
-    { id: "0x7a91", timestamp: "2025-01-15 14:32:55", hash: "c9d14e5f2b8a7c...", author: "AI System", type: "Verification Result", status: "Immutable" },
-    { id: "0x7a92", timestamp: "2025-01-15 16:18:33", hash: "d4b73a1c6e9f2d...", author: "Auditor", type: "Adjustment Note", status: "Immutable" }
-  ];
 
   // CSV Parser
   const parseCSV = (text) => {
