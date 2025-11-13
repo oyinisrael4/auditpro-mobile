@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, AlertTriangle, CheckCircle, Users, FileText, Download, Eye, Play, Upload } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, CheckCircle, Users, FileText, Download, Eye, Play, Upload, Plus } from 'lucide-react';
 
 const AuditProPrototype = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
@@ -13,6 +13,24 @@ const AuditProPrototype = () => {
   const [userCode, setUserCode] = useState('');
   const [password, setPassword] = useState('');
   
+  // Multiple audits with individual ledgers
+  const [audits, setAudits] = useState([{
+    id: "AUD-2025-001",
+    company: "Acme Manufacturing Ltd",
+    status: "In Progress",
+    startDate: "2025-01-15",
+    auditor: "Sarah Johnson, CPA",
+    ledger: [
+      { id: "0x7a8f", timestamp: "2025-01-15 09:23:41", hash: "a3f89d2c1e4b5a...", author: "Auditor", type: "Transaction Entry", status: "Immutable" },
+      { id: "0x7a90", timestamp: "2025-01-15 11:47:12", hash: "b2e47c8d9a1f3e...", author: "Auditor", type: "Raw Data Upload", status: "Immutable" },
+      { id: "0x7a91", timestamp: "2025-01-15 14:32:55", hash: "c9d14e5f2b8a7c...", author: "AI System", type: "Verification Result", status: "Immutable" },
+      { id: "0x7a92", timestamp: "2025-01-15 16:18:33", hash: "d4b73a1c6e9f2d...", author: "Auditor", type: "Adjustment Note", status: "Immutable" }
+    ],
+    uploadedFiles: []
+  }]);
+  
+  const [selectedAudit, setSelectedAudit] = useState(null);
+  const [newCompany, setNewCompany] = useState('');
 
   // Login credentials for each role
   const loginCredentials = {
@@ -50,6 +68,149 @@ const AuditProPrototype = () => {
     }
   };
 
+  // PDF Export Function
+  const exportToPDF = (content, filename) => {
+    const element = document.createElement('div');
+    element.style.padding = '40px';
+    element.style.fontFamily = 'Arial, sans-serif';
+    element.innerHTML = content;
+    
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write('<html><head><title>' + filename + '</title>');
+    printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin:20px 0;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#2563EB;color:white;} h1{color:#2563EB;} .logo{font-size:24px;font-weight:bold;margin-bottom:20px;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(element.innerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  // Generate Ledger Report
+  const generateLedgerReport = () => {
+    if (!selectedAudit) return;
+    
+    const ledgerHTML = `
+      <div class="logo">🛡️ AuditPro</div>
+      <h1>Blockchain Ledger Report</h1>
+      <p><strong>Company:</strong> ${selectedAudit.company}</p>
+      <p><strong>Audit ID:</strong> ${selectedAudit.id}</p>
+      <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+      <hr>
+      <h2>Ledger Entries (${selectedAudit.ledger.length})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Entry ID</th>
+            <th>Type</th>
+            <th>Timestamp</th>
+            <th>Author</th>
+            <th>Hash</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${selectedAudit.ledger.map(entry => `
+            <tr>
+              <td>${entry.id}</td>
+              <td>${entry.type}</td>
+              <td>${entry.timestamp}</td>
+              <td>${entry.author}</td>
+              <td style="font-family:monospace;font-size:11px;">${entry.hash}</td>
+              <td style="color:green;font-weight:bold;">${entry.status}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:40px;font-size:12px;color:#666;">
+        <strong>Verification:</strong> All entries are cryptographically secured and immutable. 
+        Any attempt to modify entries will be detected via hash mismatch.
+      </p>
+    `;
+    
+    exportToPDF(ledgerHTML, `Ledger_${selectedAudit.id}.pdf`);
+  };
+
+  // Generate Final Audit Report
+  const generateAuditReport = () => {
+    if (!selectedAudit) return;
+    
+    const reportHTML = `
+      <div class="logo">🛡️ AuditPro</div>
+      <h1>Final Audit Report</h1>
+      <p><strong>Company:</strong> ${selectedAudit.company}</p>
+      <p><strong>Audit ID:</strong> ${selectedAudit.id}</p>
+      <p><strong>Status:</strong> ${selectedAudit.status}</p>
+      <p><strong>Start Date:</strong> ${selectedAudit.startDate}</p>
+      <p><strong>Lead Auditor:</strong> ${selectedAudit.auditor}</p>
+      <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+      <hr>
+      
+      <h2>Executive Summary</h2>
+      <p>This audit has been conducted using AuditPro's blockchain-verified platform with independent AI verification.</p>
+      
+      <h2>Uploaded Documents (${selectedAudit.uploadedFiles?.length || 0})</h2>
+      ${selectedAudit.uploadedFiles?.length > 0 ? `
+        <ul>
+          ${selectedAudit.uploadedFiles.map(file => `
+            <li>${file.name} - ${file.records} records (${file.size})</li>
+          `).join('')}
+        </ul>
+      ` : '<p>No files uploaded.</p>'}
+      
+      ${aiResults ? `
+        <h2>AI Verification Results</h2>
+        <table>
+          <tr>
+            <th>Metric</th>
+            <th>Auditor Summary</th>
+            <th>AI Summary</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Total Sales</td>
+            <td>${aiResults.auditorSummary.totalSales.toLocaleString()}</td>
+            <td>${aiResults.aiSummary.totalSales.toLocaleString()}</td>
+            <td>${aiResults.auditorSummary.totalSales === aiResults.aiSummary.totalSales ? '✅ Match' : '⚠️ Mismatch'}</td>
+          </tr>
+          <tr>
+            <td>Total Expenses</td>
+            <td>${aiResults.auditorSummary.totalExpenses.toLocaleString()}</td>
+            <td>${aiResults.aiSummary.totalExpenses.toLocaleString()}</td>
+            <td>${aiResults.auditorSummary.totalExpenses === aiResults.aiSummary.totalExpenses ? '✅ Match' : '⚠️ Mismatch'}</td>
+          </tr>
+          <tr>
+            <td>Total Inventory</td>
+            <td>${aiResults.auditorSummary.totalInventory.toLocaleString()}</td>
+            <td>${aiResults.aiSummary.totalInventory.toLocaleString()}</td>
+            <td>${aiResults.auditorSummary.totalInventory === aiResults.aiSummary.totalInventory ? '✅ Match' : '⚠️ Mismatch'}</td>
+          </tr>
+        </table>
+        
+        ${aiResults.mismatches?.length > 0 ? `
+          <h3>Flagged Items</h3>
+          <ul>
+            ${aiResults.mismatches.map(m => `
+              <li><strong>${m.field}:</strong> Delta of ${m.delta} (${m.severity === 'amber' ? 'Review Required' : 'Critical'})</li>
+            `).join('')}
+          </ul>
+        ` : ''}
+      ` : ''}
+      
+      <h2>Blockchain Verification</h2>
+      <p><strong>Total Ledger Entries:</strong> ${selectedAudit.ledger.length}</p>
+      <p><strong>Immutability Status:</strong> ✅ All entries cryptographically secured</p>
+      <p><strong>Tamper Attempts:</strong> 0 detected</p>
+      
+      <hr style="margin-top:40px;">
+      <p style="font-size:12px;color:#666;">
+        This report was generated by AuditPro blockchain-verified audit platform. 
+        All data is cryptographically secured and independently verified by AI.
+      </p>
+    `;
+    
+    exportToPDF(reportHTML, `Audit_Report_${selectedAudit.id}.pdf`);
+  };
+
   // Mock data
   const mockAudit = {
     id: "AUD-2025-001",
@@ -85,10 +246,10 @@ const AuditProPrototype = () => {
     return data;
   };
 
-  // Handle file upload
+  // Handle file upload - now per audit
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file || !selectedAudit) return;
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -103,7 +264,38 @@ const AuditProPrototype = () => {
         data: data
       };
 
+      // Update the selected audit's files
+      setAudits(prevAudits => prevAudits.map(audit => 
+        audit.id === selectedAudit.id 
+          ? { ...audit, uploadedFiles: [...(audit.uploadedFiles || []), fileInfo] }
+          : audit
+      ));
+      
+      // Also update uploadedFiles state for compatibility
       setUploadedFiles(prev => [...prev, fileInfo]);
+      
+      // Add ledger entry for file upload
+      const newLedgerEntry = {
+        id: `0x${Math.random().toString(36).substring(2, 6)}`,
+        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        hash: Math.random().toString(36).substring(2, 18) + '...',
+        author: loginCredentials[currentRole].name,
+        type: 'File Upload',
+        status: 'Immutable'
+      };
+      
+      setAudits(prevAudits => prevAudits.map(audit => 
+        audit.id === selectedAudit.id 
+          ? { ...audit, ledger: [...audit.ledger, newLedgerEntry] }
+          : audit
+      ));
+      
+      // Update selectedAudit
+      setSelectedAudit(prev => ({
+        ...prev,
+        uploadedFiles: [...(prev.uploadedFiles || []), fileInfo],
+        ledger: [...prev.ledger, newLedgerEntry]
+      }));
       
       // Store parsed data by file type
       if (file.name.toLowerCase().includes('sales')) {
@@ -113,8 +305,6 @@ const AuditProPrototype = () => {
       } else if (file.name.toLowerCase().includes('inventory')) {
         setParsedData(prev => ({ ...prev, inventory: data }));
       }
-      
-  
     };
     reader.readAsText(file);
   };
@@ -343,38 +533,62 @@ const AuditProPrototype = () => {
           <h1 className="text-2xl font-bold mb-2">Company Dashboard</h1>
           <p className="text-gray-600 mb-6">Active Audits & Recent Activity</p>
           
-          <div className="bg-white rounded-lg shadow-md p-5 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="font-bold text-lg">{mockAudit.company}</h3>
-                <p className="text-sm text-gray-600">Audit ID: {mockAudit.id}</p>
+          {audits.map((audit, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-md p-5 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-bold text-lg">{audit.company}</h3>
+                  <p className="text-sm text-gray-600">Audit ID: {audit.id}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  audit.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 
+                  audit.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {audit.status}
+                </span>
               </div>
-              <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                {mockAudit.status}
-              </span>
+              <div className="text-sm text-gray-600 mb-3">
+                <p>Started: {audit.startDate}</p>
+                <p>Auditor: {audit.auditor}</p>
+                <p className="mt-2 text-blue-600 font-medium">
+                  Files: {audit.uploadedFiles?.length || 0} | Ledger Entries: {audit.ledger?.length || 0}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedAudit(audit);
+                    setUploadedFiles(audit.uploadedFiles || []);
+                    setCurrentScreen('workspace');
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+                >
+                  Open Audit
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedAudit(audit);
+                    setCurrentScreen('ledger');
+                  }}
+                  className="flex-1 border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition"
+                >
+                  View Ledger
+                </button>
+              </div>
             </div>
-            <div className="text-sm text-gray-600 mb-3">
-              <p>Started: {mockAudit.startDate}</p>
-              <p>Auditor: {mockAudit.auditor}</p>
-              <p className="mt-2 text-blue-600 font-medium">Uploaded Files: {uploadedFiles.length}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentScreen('workspace')}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
-              >
-                Open Audit
-              </button>
-              <button
-                onClick={() => setCurrentScreen('ledger')}
-                className="flex-1 border border-blue-600 text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition"
-              >
-                View Ledger
-              </button>
-            </div>
-          </div>
+          ))}
           
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-md p-5 text-white">
+          {currentRole === 'auditor' && (
+            <button
+              onClick={() => setCurrentScreen('new-audit')}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium mt-4 hover:bg-green-700 transition flex items-center justify-center"
+            >
+              <Plus className="w-5 h-5 mr-2" /> Create New Audit
+            </button>
+          )}
+          
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-md p-5 text-white mt-6">
             <Lock className="w-8 h-8 mb-2" />
             <h3 className="font-bold text-lg mb-1">Immutable Records</h3>
             <p className="text-sm opacity-90">All entries are cryptographically secured and timestamped</p>
@@ -392,6 +606,88 @@ const AuditProPrototype = () => {
       </div>
     ),
 
+    'new-audit': (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-green-600 text-white p-4">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setCurrentScreen('dashboard')} className="text-white">← Back</button>
+            <span className="font-bold">Create New Audit</span>
+            <div className="w-6"></div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">New Audit Details</h2>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Company Name</label>
+              <input
+                type="text"
+                placeholder="e.g., TechCorp Industries Ltd"
+                value={newCompany}
+                onChange={(e) => setNewCompany(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-3"
+              />
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-xs text-gray-700">
+                <strong>Auto-Generated:</strong>
+              </p>
+              <p className="text-xs text-gray-600 mt-1">• Audit ID: AUD-{Date.now().toString().slice(-6)}</p>
+              <p className="text-xs text-gray-600">• Start Date: {new Date().toISOString().split('T')[0]}</p>
+              <p className="text-xs text-gray-600">• Lead Auditor: {loginCredentials[currentRole].name}</p>
+              <p className="text-xs text-gray-600">• Status: In Progress</p>
+            </div>
+            
+            <button
+              onClick={() => {
+                if (!newCompany.trim()) {
+                  alert('Please enter a company name');
+                  return;
+                }
+                const newAudit = {
+                  id: `AUD-2025-${String(audits.length + 1).padStart(3, '0')}`,
+                  company: newCompany,
+                  status: "In Progress",
+                  startDate: new Date().toISOString().split('T')[0],
+                  auditor: loginCredentials[currentRole].name,
+                  ledger: [{
+                    id: "0x" + Math.random().toString(36).substring(2, 6),
+                    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                    hash: Math.random().toString(36).substring(2, 18) + '...',
+                    author: loginCredentials[currentRole].name,
+                    type: 'Audit Created',
+                    status: 'Immutable'
+                  }],
+                  uploadedFiles: []
+                };
+                setAudits(prev => [...prev, newAudit]);
+                setNewCompany('');
+                setSelectedAudit(newAudit);
+                setCurrentScreen('workspace');
+              }}
+              disabled={!newCompany.trim()}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              Create Audit & Start Working
+            </button>
+            
+            <button
+              onClick={() => {
+                setNewCompany('');
+                setCurrentScreen('dashboard');
+              }}
+              className="w-full mt-4 text-gray-600 hover:text-gray-800 py-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    ),
+
     workspace: (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-blue-600 text-white p-4">
@@ -403,16 +699,20 @@ const AuditProPrototype = () => {
         </div>
         
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">{mockAudit.company}</h2>
+          <h2 className="text-xl font-bold mb-2">{selectedAudit?.company || 'No Audit Selected'}</h2>
+          <p className="text-sm text-gray-600 mb-2">Audit ID: {selectedAudit?.id}</p>
+          <p className="text-sm text-gray-600 mb-4">Auditor: {selectedAudit?.auditor}</p>
           
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              onClick={() => setCurrentScreen('upload')}
-              className="bg-white border-2 border-blue-600 text-blue-600 p-4 rounded-lg font-medium hover:bg-blue-50 transition"
-            >
-              <Upload className="w-6 h-6 mx-auto mb-2" />
-              Upload Data
-            </button>
+            {currentRole === 'auditor' && (
+              <button
+                onClick={() => setCurrentScreen('upload')}
+                className="bg-white border-2 border-blue-600 text-blue-600 p-4 rounded-lg font-medium hover:bg-blue-50 transition"
+              >
+                <Upload className="w-6 h-6 mx-auto mb-2" />
+                Upload Data
+              </button>
+            )}
             <button
               onClick={() => setCurrentScreen('ai-verification')}
               className="bg-white border-2 border-green-600 text-green-600 p-4 rounded-lg font-medium hover:bg-green-50 transition"
@@ -425,7 +725,7 @@ const AuditProPrototype = () => {
               className="bg-white border-2 border-purple-600 text-purple-600 p-4 rounded-lg font-medium hover:bg-purple-50 transition"
             >
               <Lock className="w-6 h-6 mx-auto mb-2" />
-              Ledger Timeline
+              View Ledger
             </button>
             <button
               onClick={() => setCurrentScreen('demo')}
@@ -436,8 +736,8 @@ const AuditProPrototype = () => {
             </button>
           </div>
           
-          <h3 className="font-bold mb-3">Uploaded Files ({uploadedFiles.length})</h3>
-          {uploadedFiles.length === 0 ? (
+          <h3 className="font-bold mb-3">Uploaded Files ({selectedAudit?.uploadedFiles?.length || 0})</h3>
+          {!selectedAudit?.uploadedFiles || selectedAudit.uploadedFiles.length === 0 ? (
             <div className="bg-white p-6 rounded-lg shadow-sm text-center text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-2 text-gray-400" />
               <p>No files uploaded yet</p>
@@ -445,7 +745,7 @@ const AuditProPrototype = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {uploadedFiles.map((file, i) => (
+              {selectedAudit.uploadedFiles.map((file, i) => (
                 <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{file.name}</span>
@@ -816,66 +1116,55 @@ const AuditProPrototype = () => {
           <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-md p-5 text-white mb-6">
             <Lock className="w-8 h-8 mb-2" />
             <h3 className="font-bold text-lg mb-1">Blockchain Timeline</h3>
-            <p className="text-sm opacity-90">Cryptographically secured entries</p>
+            <p className="text-sm opacity-90">{selectedAudit?.company}</p>
+            <p className="text-xs opacity-75">Audit ID: {selectedAudit?.id}</p>
           </div>
           
-          <div className="space-y-3">
-            {mockLedgerEntries.map((entry, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-600">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center mb-1">
-                      <Lock className="w-4 h-4 text-green-600 mr-2" />
-                      <span className="font-bold text-sm">{entry.type}</span>
+          {!selectedAudit?.ledger || selectedAudit.ledger.length === 0 ? (
+            <div className="bg-white p-6 rounded-lg text-center text-gray-500">
+              <p>No ledger entries yet for this audit.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {selectedAudit.ledger.map((entry, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-600">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center mb-1">
+                        <Lock className="w-4 h-4 text-green-600 mr-2" />
+                        <span className="font-bold text-sm">{entry.type}</span>
+                      </div>
+                      <p className="text-xs text-gray-600">ID: {entry.id}</p>
                     </div>
-                    <p className="text-xs text-gray-600">ID: {entry.id}</p>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
+                      {entry.status}
+                    </span>
                   </div>
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
-                    {entry.status}
-                  </span>
-                </div>
-                
-                <div className="bg-gray-50 rounded p-2 mb-2 font-mono text-xs break-all">
-                  Hash: {entry.hash}
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span>{entry.author}</span>
-                  <span>{entry.timestamp}</span>
-                </div>
-              </div>
-            ))}
-            
-            {uploadedFiles.map((file, i) => (
-              <div key={`file-${i}`} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-600">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center mb-1">
-                      <Lock className="w-4 h-4 text-green-600 mr-2" />
-                      <span className="font-bold text-sm">File Upload</span>
-                    </div>
-                    <p className="text-xs text-gray-600">File: {file.name}</p>
+                  
+                  <div className="bg-gray-50 rounded p-2 mb-2 font-mono text-xs break-all">
+                    Hash: {entry.hash}
                   </div>
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
-                    Immutable
-                  </span>
+                  
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>{entry.author}</span>
+                    <span>{entry.timestamp}</span>
+                  </div>
                 </div>
-                
-                <div className="bg-gray-50 rounded p-2 mb-2 font-mono text-xs break-all">
-                  Hash: {(Math.random().toString(36).substring(2, 15) + '...').substring(0, 18)}
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span>System Upload</span>
-                  <span>{file.uploaded}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+          
+          <button
+            onClick={generateLedgerReport}
+            className="w-full mt-6 bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition flex items-center justify-center"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            Export Ledger Report (PDF)
+          </button>
           
           <button
             onClick={() => setCurrentScreen('demo')}
-            className="w-full mt-6 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition"
+            className="w-full mt-3 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition"
           >
             View Tamper Detection Demo
           </button>
@@ -1027,7 +1316,10 @@ const AuditProPrototype = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-3">
-              <button className="border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-medium hover:bg-blue-50 transition flex items-center justify-center">
+              <button 
+                onClick={generateAuditReport}
+                className="border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-medium hover:bg-blue-50 transition flex items-center justify-center"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Export PDF
               </button>
