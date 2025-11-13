@@ -12,6 +12,7 @@ const AuditProPrototype = () => {
   const [loginError, setLoginError] = useState('');
   const [userCode, setUserCode] = useState('');
   const [password, setPassword] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Login credentials for each role
   const loginCredentials = {
